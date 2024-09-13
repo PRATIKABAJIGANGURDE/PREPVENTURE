@@ -44,19 +44,19 @@ html{
     border: solid 2px #0056b3;
     background: #0056b3;
     color: #fff;
-    /* border-width: 20px; */
     border-radius: 10px;
     margin-left: 70px;
     margin-right: 70px;
     position: fixed;
     margin-top: 100px;
+    width: calc(100% - 140px);
     box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
 }
 .chapter-menu ul{
     display: flex;
     align-items: center;
     list-style-type: none;
-    column-gap: 60px;
+    justify-content: space-between;
     padding-right: 46px;
     padding-left: 47px;
 }
