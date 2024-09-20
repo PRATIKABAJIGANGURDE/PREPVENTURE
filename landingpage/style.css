@@ -137,7 +137,10 @@ body{
         align-items: center;
         margin-left: 30px;
         margin-right: 30px;
-        width: 100%;
+        width: calc(100%-60px);
+    }
+    .headline .text h1{
+        font-size: 30px;
     }
     .img-hero img{
         width: 0px;
