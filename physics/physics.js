@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateButtons(chapterNumber) {
         prevButton.disabled = chapterNumber === 1;
-        nextButton.disabled = chapterNumber === 21;
+        nextButton.disabled = chapterNumber === 15;
     }
 
     chapterSelect.addEventListener('change', function() {

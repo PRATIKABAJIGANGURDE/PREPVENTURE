@@ -1,8 +1,9 @@
-body{
+body {
     margin: 0;
     padding: 0;
     font-family: sans-serif;
 }
+
 .menu-toggle {
     display: none;
     flex-direction: column;
@@ -13,7 +14,7 @@ body{
     border: none;
     cursor: pointer;
     padding: 0;
-    z-index: 100;
+    z-index: 10;
     margin-top: 10px;
 }
 
@@ -27,38 +28,55 @@ body{
     transform-origin: 1px;
 }
 
-.nav{
+.nav {
     width: 100%;
     height: 60px;
-    background-color: white;
     display: flex;
     justify-content: space-between;
-    border: 1.7px black solid;
-    border-top: none;
-    border-left: none;
-    border-right: none;
     position: fixed;
-    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+    column-gap: 20px;
 }
-.nav .logo img{
+
+.nav .logo img {
     width: 150px;
-    margin-top: -45px;
-    padding-left: 70px;
+
 }
-.nav .navbar ul{
+
+.nav .navbar ul {
     display: flex;
     list-style-type: none;
-    column-gap: 70px; 
-    margin-left: auto;
-    padding-top: 5px;
-    margin-right: 100px;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
 }
-.nav .navbar li a{
+
+.nav .navbar li a {
     text-decoration: none;
-    color: #3172ac;
+    color: #3172ac; 
     font-weight: bolder;
     font-family: sans-serif;
 }
+.button-submit {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: none;
+    color: black;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 10px;
+    width: 100px;
+    padding: 20px;
+    cursor: pointer;
+    font-weight: bolder;
+    font-family: sans-serif;
+  }
+  
 .chapter-menu{
     border: solid 2px #0056b3;
     background: #0056b3;

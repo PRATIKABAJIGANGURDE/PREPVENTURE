@@ -31,38 +31,52 @@ body {
 .nav {
     width: 100%;
     height: 60px;
-    background-color: white;
     display: flex;
     justify-content: space-between;
-    border: 1.7px black solid;
-    border-top: none;
-    border-left: none;
-    border-right: none;
     position: fixed;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+    column-gap: 20px;
+    margin-left: -9px;
 }
 
 .nav .logo img {
     width: 150px;
-    margin-top: -45px;
-    padding-left: 70px;
 }
 
 .nav .navbar ul {
     display: flex;
     list-style-type: none;
-    column-gap: 70px; 
-    margin-left: auto;
-    padding-top: 5px;
-    margin-right: 100px;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
 }
 
 .nav .navbar li a {
     text-decoration: none;
-    color: #3172ac;
+    color: #3172ac; 
     font-weight: bolder;
     font-family: sans-serif;
 }
-
+.button-submit {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: none;
+    color: black;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 10px;
+    width: 100px;
+    padding: 20px;
+    cursor: pointer;
+    font-weight: bolder;
+    font-family: sans-serif;
+  }
+   
 .landing-page {
     padding-top: 60px;
     display: flex;
@@ -108,6 +122,7 @@ body {
         display: flex;
         margin-top: 20px;
         margin-right: 20px;
+        z-index: 15;
     }
    
     .navbar {
@@ -120,6 +135,7 @@ body {
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         transform: translateX(100%);
         transition: transform 0.3s ease-in-out;
+        z-index: 15;
     }
 
     .nav .logo img {
@@ -189,6 +205,43 @@ body {
         margin-top: -20px;
         padding-left: 10px;
     }
+    .menu-toggle {
+        display: flex;
+        margin-top: 20px;
+        margin-right: 20px;
+    }
+   
+    .navbar {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        height: calc(100vh - 60px);
+        width: 100%;
+        background-color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .nav .logo img {
+        width: 120px;
+        margin-top: -30px;
+        padding-left: 20px;
+    }
+
+    .navbar.open {
+        transform: translateX(0);
+    }
+
+    .navbar ul {
+        flex-direction: column;
+        padding: 2rem;
+        margin-right: 0;
+    }
+
+    .navbar ul li {
+        margin: 1rem 0;
+    } 
 
     .headline .text h1 {
         font-size: 24px;
