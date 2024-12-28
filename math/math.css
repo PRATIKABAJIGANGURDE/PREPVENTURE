@@ -150,7 +150,7 @@ main {
 .chapter.active {
     display: block;
 }
-section{
+section {
     padding-top: 200px;
 }
 
@@ -214,8 +214,7 @@ svg {
     align-items: center;
 }
 .chapter-div{
-    padding-left: 98px;
-
+    margin-left: 98px;
 }
 
 /* Responsive media queries for mobile and smaller screens */
