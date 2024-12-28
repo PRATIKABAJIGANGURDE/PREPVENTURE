@@ -63,7 +63,7 @@ body {
     font-family: sans-serif;
 }
 .button-submit {
-    background: rgb(41, 41, 41);
+    background: #0056b3;
     backdrop-filter: blur(10px);
     border: none;
     color: rgb(226, 226, 226);

@@ -214,7 +214,8 @@ svg {
     align-items: center;
 }
 .chapter-div{
-    margin-left: 98px;
+    padding-left: 98px;
+
 }
 
 /* Responsive media queries for mobile and smaller screens */
