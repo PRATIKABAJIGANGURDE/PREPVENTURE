@@ -9,11 +9,7 @@ const app = express();
 
 // Production-ready CORS configuration
 app.use(cors({
-    origin: [
-        'https://prepventure-backend.onrender.com', 
-        'http://localhost:3000',
-        'https://prepventure-quiz.vercel.app/'
-    ],
+    origin: ['https://prepventure-quiz.vercel.app/', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Device-ID'],
     credentials: true
@@ -21,7 +17,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// Database connection for production
+// Database connection configuration
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -40,111 +36,151 @@ const pool = mysql.createPool({
 pool.getConnection()
     .then(connection => {
         console.log('Database connected successfully');
+        console.log('Connected to host:', process.env.DB_HOST);
         connection.release();
     })
     .catch(err => {
         console.error('Database connection failed:', err);
+        console.error('Connection details:', {
+            host: process.env.DB_HOST,
+            user: process.env.DB_USER,
+            database: process.env.DB_NAME,
+            port: process.env.DB_PORT
+        });
     });
 
-// Login endpoint with error handling
+// Basic route to test server
+app.get('/', (req, res) => {
+    res.json({ message: 'Server is running' });
+});
+
+// Register endpoint
+app.post('/auth/register', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        // Validate input
+        if (!email || !password || !name) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        const connection = await pool.getConnection();
+        
+        try {
+            // Check if user already exists
+            const [existingUsers] = await connection.query(
+                'SELECT * FROM users WHERE email = ?',
+                [email]
+            );
+
+            if (existingUsers.length > 0) {
+                return res.status(400).json({ message: 'Email already registered' });
+            }
+
+            // Hash password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Insert new user
+            const [result] = await connection.query(
+                'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+                [name, email, hashedPassword]
+            );
+
+            // Generate JWT
+            const token = jwt.sign(
+                { userId: result.insertId },
+                process.env.JWT_SECRET || 'your-secret-key',
+                { expiresIn: '24h' }
+            );
+
+            res.status(201).json({
+                message: 'User registered successfully',
+                token
+            });
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// Login endpoint
 app.post('/auth/login', async (req, res) => {
     try {
-        console.log('Login request received:', req.body); // Debug log
+        const { email, password } = req.body;
 
-        const { email, password, deviceId } = req.body;
-        
+        // Validate input
         if (!email || !password) {
             return res.status(400).json({ message: 'Email and password are required' });
         }
 
-        // Find user
-        const [users] = await pool.execute(
-            'SELECT * FROM users WHERE email = ?',
-            [email]
-        );
+        const connection = await pool.getConnection();
+        
+        try {
+            // Find user
+            const [users] = await connection.query(
+                'SELECT * FROM users WHERE email = ?',
+                [email]
+            );
 
-        console.log('Found users:', users.length); // Debug log
-
-        if (users.length === 0) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        const user = users[0];
-        const validPassword = await bcrypt.compare(password, user.password);
-
-        console.log('Password valid:', validPassword); // Debug log
-
-        if (!validPassword) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        // Create token
-        const token = jwt.sign(
-            { userId: user.id, deviceId }, 
-            'your-secret-key', // Replace with a proper secret key in production
-            { expiresIn: '24h' }
-        );
-
-        // Store session
-        await pool.execute(
-            'INSERT INTO user_sessions (user_id, device_id, token) VALUES (?, ?, ?)',
-            [user.id, deviceId, token]
-        );
-
-        res.json({
-            token,
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.name
+            if (users.length === 0) {
+                return res.status(401).json({ message: 'Invalid credentials' });
             }
-        });
+
+            const user = users[0];
+
+            // Verify password
+            const validPassword = await bcrypt.compare(password, user.password);
+            if (!validPassword) {
+                return res.status(401).json({ message: 'Invalid credentials' });
+            }
+
+            // Generate JWT
+            const token = jwt.sign(
+                { userId: user.id },
+                process.env.JWT_SECRET || 'your-secret-key',
+                { expiresIn: '24h' }
+            );
+
+            res.json({
+                message: 'Login successful',
+                token
+            });
+        } finally {
+            connection.release();
+        }
     } catch (error) {
-        console.error('Login error:', error); // Debug log
-        res.status(500).json({ 
-            message: 'Server error', 
-            error: error.message 
-        });
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
-// Verify endpoint
+// Verify token endpoint
 app.get('/auth/verify', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
-        const deviceId = req.headers['device-id'];
-
-        if (!token || !deviceId) {
-            return res.status(401).json({ message: 'Authentication required' });
+        
+        if (!token) {
+            return res.status(401).json({ message: 'No token provided' });
         }
 
-        // Check session
-        const [sessions] = await pool.execute(
-            'SELECT * FROM user_sessions WHERE token = ? AND device_id = ?',
-            [token, deviceId]
-        );
-
-        if (sessions.length === 0) {
-            return res.status(401).json({ message: 'Invalid session' });
-        }
-
-        res.json({ valid: true });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        res.json({ valid: true, userId: decoded.userId });
     } catch (error) {
-        console.error('Verify error:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(401).json({ message: 'Invalid token' });
     }
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ 
-        message: 'Something broke!',
-        error: err.message
-    });
-});
-
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    console.log('Environment:', process.env.NODE_ENV);
+});
+
+// Error handling for unhandled promises
+process.on('unhandledRejection', (error) => {
+    console.error('Unhandled promise rejection:', error);
 }); 
