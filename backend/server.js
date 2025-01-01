@@ -9,7 +9,11 @@ const app = express();
 
 // Production-ready CORS configuration
 app.use(cors({
-    origin: ['https://your-frontend-domain.com', 'http://localhost:3000'],
+    origin: [
+        'https://prepventure-backend.onrender.com', 
+        'http://localhost:3000',
+        'https://prepventure-quiz.vercel.app/'
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Device-ID'],
     credentials: true
