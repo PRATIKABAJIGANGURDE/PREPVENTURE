@@ -3,95 +3,51 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const path = require('path');
+require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '../'))); // Serve static files
+// Production-ready CORS configuration
 app.use(cors({
-    origin: '*',
+    origin: ['https://your-frontend-domain.com', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Device-ID'],
     credentials: true
 }));
-app.use('/components', express.static(path.join(__dirname, '../components')));
 
-// MySQL Connection Pool
+app.use(express.json());
+
+// Database connection for production
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'Pratik121ff@ybl',
-    database: 'prepventure'
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
-// Database initialization
-async function initializeDatabase() {
-    try {
-        const connection = await pool.getConnection();
-        
-        // Create users table
-        await connection.execute(`
-            CREATE TABLE IF NOT EXISTS users (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                name VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
+// Test database connection
+pool.getConnection()
+    .then(connection => {
+        console.log('Database connected successfully');
         connection.release();
-        console.log('Database initialized successfully');
-    } catch (error) {
-        console.error('Database initialization error:', error);
-    }
-}
+    })
+    .catch(err => {
+        console.error('Database connection failed:', err);
+    });
 
-initializeDatabase();
-
-// Auth Routes
-app.post('/auth/register', async (req, res) => {
-    try {
-        const { email, password, name } = req.body;
-        
-        // Check if user exists
-        const [existingUsers] = await pool.execute(
-            'SELECT * FROM users WHERE email = ?',
-            [email]
-        );
-
-        if (existingUsers.length > 0) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 12);
-
-        // Create user
-        const [result] = await pool.execute(
-            'INSERT INTO users (email, password, name) VALUES (?, ?, ?)',
-            [email, hashedPassword, name]
-        );
-
-        // Create token
-        const token = jwt.sign(
-            { userId: result.insertId },
-            'your_jwt_secret',
-            { expiresIn: '24h' }
-        );
-
-        res.status(201).json({ token });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
+// Login endpoint with error handling
 app.post('/auth/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        console.log('Login attempt for email:', email); // Debug log
+        console.log('Login request received:', req.body); // Debug log
+
+        const { email, password, deviceId } = req.body;
+        
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required' });
+        }
 
         // Find user
         const [users] = await pool.execute(
@@ -102,30 +58,32 @@ app.post('/auth/login', async (req, res) => {
         console.log('Found users:', users.length); // Debug log
 
         if (users.length === 0) {
-            console.log('No user found with this email'); // Debug log
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         const user = users[0];
+        const validPassword = await bcrypt.compare(password, user.password);
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
-        console.log('Password match:', isMatch); // Debug log
+        console.log('Password valid:', validPassword); // Debug log
 
-        if (!isMatch) {
-            console.log('Password does not match'); // Debug log
-            return res.status(400).json({ message: 'Invalid credentials' });
+        if (!validPassword) {
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         // Create token
         const token = jwt.sign(
-            { userId: user.id },
-            'your_jwt_secret',
+            { userId: user.id, deviceId }, 
+            'your-secret-key', // Replace with a proper secret key in production
             { expiresIn: '24h' }
         );
 
-        console.log('Login successful for user:', user.id); // Debug log
-        res.json({ 
+        // Store session
+        await pool.execute(
+            'INSERT INTO user_sessions (user_id, device_id, token) VALUES (?, ?, ?)',
+            [user.id, deviceId, token]
+        );
+
+        res.json({
             token,
             user: {
                 id: user.id,
@@ -134,73 +92,51 @@ app.post('/auth/login', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
-// Protected route middleware
-const auth = (req, res, next) => {
-    try {
-        const token = req.header('Authorization').replace('Bearer ', '');
-        const decoded = jwt.verify(token, 'your_jwt_secret');
-        req.userId = decoded.userId;
-        next();
-    } catch (error) {
-        res.status(401).json({ message: 'Authentication required' });
-    }
-};
-
-// Example protected route
-app.get('/protected', auth, async (req, res) => {
-    try {
-        const [user] = await pool.execute(
-            'SELECT id, email, name FROM users WHERE id = ?',
-            [req.userId]
-        );
-        
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        
-        res.json(user[0]);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
-// Add a test endpoint to verify user data
-app.get('/auth/verify', auth, async (req, res) => {
-    try {
-        const [users] = await pool.execute(
-            'SELECT id, email, name FROM users WHERE id = ?',
-            [req.userId]
-        );
-
-        if (users.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        res.json({
-            user: users[0]
+        console.error('Login error:', error); // Debug log
+        res.status(500).json({ 
+            message: 'Server error', 
+            error: error.message 
         });
+    }
+});
+
+// Verify endpoint
+app.get('/auth/verify', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        const deviceId = req.headers['device-id'];
+
+        if (!token || !deviceId) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
+
+        // Check session
+        const [sessions] = await pool.execute(
+            'SELECT * FROM user_sessions WHERE token = ? AND device_id = ?',
+            [token, deviceId]
+        );
+
+        if (sessions.length === 0) {
+            return res.status(401).json({ message: 'Invalid session' });
+        }
+
+        res.json({ valid: true });
     } catch (error) {
         console.error('Verify error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// Add error handling middleware
+// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({ message: 'Something broke!' });
+    res.status(500).json({ 
+        message: 'Something broke!',
+        error: err.message
+    });
 });
 
-// Handle 404
-app.use((req, res) => {
-    res.status(404).json({ message: 'Route not found' });
-});
-
-app.listen(5000, () => {
-    console.log('Server running on http://localhost:5000');
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 }); 
