@@ -63,21 +63,43 @@ body {
     font-family: sans-serif;
 }
 .button-submit {
-    background: rgb(41, 41, 41);
-    backdrop-filter: blur(10px);
+    display: inline-block;
+    width: 150px;
+    padding: 16px;
+    font-size: 17px;
+    color: #FFFFFF;
+    background-color: #0056b3;
     border: none;
-    color: rgb(226, 226, 226);
-    font-size: 15px;
-    font-weight: 500;
-    border-radius: 15px;
-    width: 100px;
-    padding: 20px;
+    border-radius: 4px;
+    text-align: center;
     cursor: pointer;
-    font-weight: bolder;
-    font-family: sans-serif;
-  }
-  
-  .chapter-nav {
+    margin: 5px;
+    overflow: hidden;
+    position: relative;
+}
+
+.button-submit .text {
+    display: inline-block;
+    position: relative;
+    transition: transform 0.5s ease;
+}
+
+.button-submit .additional-text {
+    position: absolute;
+    white-space: nowrap;
+    right: 100%;
+    transition: right 0.5s ease;
+}
+
+.button-submit:hover .text {
+    transform: translateX(-27px);
+}
+
+.button-submit:hover .additional-text {
+    right: 20px;
+}
+
+.chapter-nav {
     top: 80px;
     left: 0;
     right: 0;

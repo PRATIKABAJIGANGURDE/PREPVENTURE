@@ -63,20 +63,42 @@ body {
     font-family: sans-serif;
 }
 .button-submit {
-    background: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    width: 150px;
+    padding: 16px;
+    font-size: 17px;
+    color: #FFFFFF;
+    background-color: #0056b3;
     border: none;
-    color: black;
-    font-size: 15px;
-    font-weight: 500;
-    border-radius: 10px;
-    width: 100px;
-    padding: 20px;
+    border-radius: 4px;
+    text-align: center;
     cursor: pointer;
-    font-weight: bolder;
-    font-family: sans-serif;
-  }
-  
+    margin: 5px;
+    overflow: hidden;
+    position: relative;
+}
+
+.button-submit .text {
+    display: inline-block;
+    position: relative;
+    transition: transform 0.5s ease;
+}
+
+.button-submit .additional-text {
+    position: absolute;
+    white-space: nowrap;
+    right: 100%;
+    transition: right 0.5s ease;
+}
+
+.button-submit:hover .text {
+    transform: translateX(-27px);
+}
+
+.button-submit:hover .additional-text {
+    right: 20px;
+}
+
 .chapter-menu{
     border: solid 2px #0056b3;
     background: #0056b3;
