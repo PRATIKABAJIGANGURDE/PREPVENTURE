@@ -19,11 +19,11 @@ app.use(express.json());
 
 // Database connection configuration
 const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
+    host: 'autorack.proxy.rlwy.net',
+    user: 'root',
+    password: 'WjSQunJwUmVUuZYaDgvxqqWfrDYbAYng',
+    database: 'railway',
+    port: '54836',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
@@ -36,17 +36,11 @@ const pool = mysql.createPool({
 pool.getConnection()
     .then(connection => {
         console.log('Database connected successfully');
-        console.log('Connected to host:', process.env.DB_HOST);
+        console.log('Connected to Railway MySQL!');
         connection.release();
     })
     .catch(err => {
         console.error('Database connection failed:', err);
-        console.error('Connection details:', {
-            host: process.env.DB_HOST,
-            user: process.env.DB_USER,
-            database: process.env.DB_NAME,
-            port: process.env.DB_PORT
-        });
     });
 
 // Basic route to test server
