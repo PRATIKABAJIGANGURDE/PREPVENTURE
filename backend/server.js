@@ -90,19 +90,35 @@ app.get('/test-db', async (req, res) => {
     }
 });
 
+// Add better error handling
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (error) => {
+    console.error('Unhandled Rejection:', error);
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
-    console.log(`Server running on port ${PORT}`);
-    const dbConnected = await testConnection();
-    if (dbConnected) {
-        console.log('Initial database connection successful');
-    } else {
-        console.log('Initial database connection failed');
+    try {
+        console.log(`Server running on port ${PORT}`);
+        console.log('Environment:', process.env.NODE_ENV);
+        console.log('Database config:', {
+            host: process.env.MYSQLHOST,
+            user: process.env.MYSQLUSER,
+            database: process.env.MYSQL_DATABASE,
+            port: process.env.MYSQLPORT
+        });
+        
+        const dbConnected = await testConnection();
+        if (dbConnected) {
+            console.log('Database connection successful');
+        } else {
+            console.log('Database connection failed');
+        }
+    } catch (error) {
+        console.error('Server startup error:', error);
     }
-});
-
-// Error handling for unhandled promises
-process.on('unhandledRejection', (error) => {
-    console.error('Unhandled promise rejection:', error);
 }); 
