@@ -9,21 +9,26 @@ const app = express();
 
 // Production-ready CORS configuration
 app.use(cors({
-    origin: ['https://prepventure-quiz.vercel.app/', 'http://localhost:3000'],
+    origin: ['http://127.0.0.1:5502', 'http://localhost:5502'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Device-ID'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 
 app.use(express.json());
 
-// Database connection configuration
+// Test route to check if server is running
+app.get('/', (req, res) => {
+    res.json({ message: 'Server is running' });
+});
+
+// Database connection configuration using Railway variables
 const pool = mysql.createPool({
-    host: 'autorack.proxy.rlwy.net',
-    user: 'root',
-    password: 'WjSQunJwUmVUuZYaDgvxqqWfrDYbAYng',
-    database: 'railway',
-    port: '54836',
+    host: process.env.MYSQLHOST || 'autorack.proxy.rlwy.net',
+    user: process.env.MYSQLUSER || 'root',
+    password: process.env.MYSQL_ROOT_PASSWORD || 'WjSQunJwUmVUuZYaDgvxqqWfrDYbAYng',
+    database: process.env.MYSQL_DATABASE || 'railway',
+    port: process.env.MYSQLPORT || '3306',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
@@ -33,145 +38,68 @@ const pool = mysql.createPool({
 });
 
 // Test database connection
-pool.getConnection()
-    .then(connection => {
-        console.log('Database connected successfully');
-        console.log('Connected to Railway MySQL!');
+async function testConnection() {
+    try {
+        const connection = await pool.getConnection();
+        console.log('Successfully connected to MySQL database!');
+        console.log('Connection details:', {
+            host: process.env.MYSQLHOST,
+            user: process.env.MYSQLUSER,
+            database: process.env.MYSQL_DATABASE,
+            port: process.env.MYSQLPORT
+        });
+        
+        const [rows] = await connection.query('SELECT 1');
+        console.log('Test query successful:', rows);
+        
         connection.release();
-    })
-    .catch(err => {
-        console.error('Database connection failed:', err);
-    });
-
-// Basic route to test server
-app.get('/', (req, res) => {
-    res.json({ message: 'Server is running' });
-});
-
-// Register endpoint
-app.post('/auth/register', async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
-
-        // Validate input
-        if (!email || !password || !name) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-
-        const connection = await pool.getConnection();
-        
-        try {
-            // Check if user already exists
-            const [existingUsers] = await connection.query(
-                'SELECT * FROM users WHERE email = ?',
-                [email]
-            );
-
-            if (existingUsers.length > 0) {
-                return res.status(400).json({ message: 'Email already registered' });
-            }
-
-            // Hash password
-            const hashedPassword = await bcrypt.hash(password, 10);
-
-            // Insert new user
-            const [result] = await connection.query(
-                'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-                [name, email, hashedPassword]
-            );
-
-            // Generate JWT
-            const token = jwt.sign(
-                { userId: result.insertId },
-                process.env.JWT_SECRET || 'your-secret-key',
-                { expiresIn: '24h' }
-            );
-
-            res.status(201).json({
-                message: 'User registered successfully',
-                token
-            });
-        } finally {
-            connection.release();
-        }
+        return true;
     } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('Database connection error:', error);
+        return false;
     }
-});
+}
 
-// Login endpoint
-app.post('/auth/login', async (req, res) => {
+// Routes
+app.get('/test-db', async (req, res) => {
     try {
-        const { email, password } = req.body;
-
-        // Validate input
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
-        }
-
         const connection = await pool.getConnection();
-        
-        try {
-            // Find user
-            const [users] = await connection.query(
-                'SELECT * FROM users WHERE email = ?',
-                [email]
-            );
-
-            if (users.length === 0) {
-                return res.status(401).json({ message: 'Invalid credentials' });
+        await connection.query('SELECT 1');
+        connection.release();
+        res.json({ 
+            message: 'Database connection successful!',
+            config: {
+                host: process.env.MYSQLHOST,
+                user: process.env.MYSQLUSER,
+                database: process.env.MYSQL_DATABASE,
+                port: process.env.MYSQLPORT
             }
-
-            const user = users[0];
-
-            // Verify password
-            const validPassword = await bcrypt.compare(password, user.password);
-            if (!validPassword) {
-                return res.status(401).json({ message: 'Invalid credentials' });
+        });
+    } catch (error) {
+        console.error('Test connection error:', error);
+        res.status(500).json({ 
+            error: 'Database connection failed', 
+            details: error.message,
+            config: {
+                host: process.env.MYSQLHOST,
+                user: process.env.MYSQLUSER,
+                database: process.env.MYSQL_DATABASE,
+                port: process.env.MYSQLPORT
             }
-
-            // Generate JWT
-            const token = jwt.sign(
-                { userId: user.id },
-                process.env.JWT_SECRET || 'your-secret-key',
-                { expiresIn: '24h' }
-            );
-
-            res.json({
-                message: 'Login successful',
-                token
-            });
-        } finally {
-            connection.release();
-        }
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
-// Verify token endpoint
-app.get('/auth/verify', async (req, res) => {
-    try {
-        const token = req.headers.authorization?.split(' ')[1];
-        
-        if (!token) {
-            return res.status(401).json({ message: 'No token provided' });
-        }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-        res.json({ valid: true, userId: decoded.userId });
-    } catch (error) {
-        res.status(401).json({ message: 'Invalid token' });
+        });
     }
 });
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log('Environment:', process.env.NODE_ENV);
+app.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`);
+    const dbConnected = await testConnection();
+    if (dbConnected) {
+        console.log('Initial database connection successful');
+    } else {
+        console.log('Initial database connection failed');
+    }
 });
 
 // Error handling for unhandled promises
