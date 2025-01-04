@@ -4,86 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="landingpage/favicon.png" type="image/png">
-    <link rel="stylesheet" href="/landingpage/style.css">
+    <link rel="shortcut icon" href="public/landingpage/favicon.png" type="image/png">
+    <link rel="stylesheet" href="/public/landingpage/style.css">
     <title>Prepventure</title>
 </head>
 
 <body>
     
-    <nav class="nav">
-       
-        <div class="logo">
-            <img src="/landingpage/logo-prep.png" alt="Prepventure Logo">
-        </div>
-        <button class="menu-toggle" aria-label="Toggle menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-        <div class="navbar">
-            <ul>
-                <li><a href="\index.html">Home</a></li>
-                <li><a href="/physics/physics.html">Physics</a></li>
-                <li><a href="/math/math.html">Mathematics</a></li>
-                <li><a href="/chemistry/chem.html">Chemistry</a></li>
-                <li><a href="/bio/bio.html">Biology</a></li>
-            </ul>
-        </div>
-        <button class="button-submit" onclick="window.location.href='/auth/login.html'">
-            <span class="text">Login</span>
-            <span class="additional-text"> Now →</span>
-        </button>
-    </nav>
     <section id="home">
-    <div class="landing-page">
-        <div class="headline">
-            <div class="text">
-                <h1>“Master JEE/NEET with Expert Level Practice Questions”</h1>
-                <p>Unlock thousands of curated questions designed to help you excel in every exam.</p>
+        <div class="landing-page">
+            <div class="headline">
+                <div class="text">
+                    <h1>“Master JEE/NEET with Expert Level Practice Questions”</h1>
+                    <p>Unlock thousands of curated questions designed to help you excel in every exam.</p>
+                </div>
+                <div class="btn">
+                    <a href="/public/physics/physics.html">Start Practicing &nbsp; &#10230;</a>
+                </div>
             </div>
-            <div class="btn">
-                <a href="/physics/physics.html">Start Practicing &nbsp; &#10230;</a>
+            <div class="right-side">
+                <div class="img-hero">
+                    <img src="/public/landingpage/hero-prep.png" alt="">
+                </div>
             </div>
         </div>
-        <div class="right-side">
-            <div class="img-hero">
-                <img src="/landingpage/hero-prep.png" alt="">
-            </div>
-        </div>
-    </div>
-</section>
-<script src="/landingpage/script.js"></script>
-<script src="/auth/checkAuth.js"></script>
-<script>
-    // Add this function to check and update button state
-    function updateLoginButton() {
-        const token = localStorage.getItem('token');
-        const loginButton = document.querySelector('.button-submit');
-        
-        if (token) {
-            loginButton.innerHTML = `
-                <span class="text">Logout</span>
-                <span class="additional-text"> Now →</span>
-            `;
-            loginButton.onclick = function() {
-                localStorage.removeItem('token');
-                window.location.href = '/auth/login.html';
-            };
-        } else {
-            loginButton.innerHTML = `
-                <span class="text">Login</span>
-                <span class="additional-text"> Now →</span>
-            `;
-            loginButton.onclick = function() {
-                window.location.href = '/auth/login.html';
-            };
-        }
-    }
-
-    // Call the function when page loads
-    document.addEventListener('DOMContentLoaded', updateLoginButton);
-</script>
+    </section>
+    <script src="/public/landingpage/script.js"></script>
+    <script src="/public/public/public/auth/checkAuth.js"></script>
+    <script src="/public/components/navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', createNavigation);
+    </script>
 </body>
 
 </html>
